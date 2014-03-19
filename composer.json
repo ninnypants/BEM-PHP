@@ -1,0 +1,17 @@
+{
+    "name": "ninnypants/bem-php",
+    "description": "BEM class generator",
+    "require-dev": {
+        "phpunit/phpunit": "4.0.0"
+    },
+    "license": "WTFPL",
+    "authors": [
+        {
+            "name": "ninnypants",
+            "email": "tyrel@ninnypants.com"
+        }
+    ],
+    "require": {
+
+    }
+}
