@@ -208,4 +208,20 @@ class BEM_Tests extends PHPUnit_Framework_Testcase {
 			'root--var2__child',
 		), BEM::get_classes_to( 'root', 'child' ) );
 	}
+
+	function test_get_classes_array() {
+		BEM::new_stack( array(
+			'root1',
+			'child1',
+		) );
+		BEM::new_stack( array(
+			'root2',
+			'child2',
+		) );
+
+		$this->assertEquals( array(
+			'root1__child1',
+			'root2__child2',
+		), BEM::get_classes(array( 'root1', 'root2' ) ) );
+	}
 }

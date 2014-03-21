@@ -1,7 +1,7 @@
 {
     "name": "ninnypants/bem-php",
     "description": "BEM class generator",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "require-dev": {
         "phpunit/phpunit": ">=4.0.0",
         "phpunit/php-code-coverage": ">=1.2.10"

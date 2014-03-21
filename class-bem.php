@@ -97,26 +97,32 @@ class BEM {
 	}
 
 	public static function get_classes_to( $stack, $block ) {
-		$keys = array_keys( self::$stacks[ $stack ] );
-		$classes = array();
-		foreach ( $keys as $key ) {
-			// if it's the first itteration just add the classes
-			if ( empty( $classes ) ) {
-				$classes[] = $key;
-			} else {
-				// if it's the second add block with child seperator
-				foreach ( $classes as $k => $class ) {
-					$classes[ $k ] .= self::$child_seperator . $key;
+		$return_classes = array();
+		$stacks = (array)$stack;
+		foreach ( $stacks as $stack ) {
+			$keys = array_keys( self::$stacks[ $stack ] );
+			$classes = array();
+			foreach ( $keys as $key ) {
+				// if it's the first itteration just add the classes
+				if ( empty( $classes ) ) {
+					$classes[] = $key;
+				} else {
+					// if it's the second add block with child seperator
+					foreach ( $classes as $k => $class ) {
+						$classes[ $k ] .= self::$child_seperator . $key;
+					}
+				}
+				$classes = array_merge( $classes, self::append_variations( $stack, $key, $classes ) );
+
+				if ( $key == $block ) {
+					break;
 				}
 			}
-			$classes = array_merge( $classes, self::append_variations( $stack, $key, $classes ) );
 
-			if ( $key == $block ) {
-				break;
-			}
+			$return_classes = array_merge( $return_classes, $classes );
 		}
 
-		return $classes;
+		return $return_classes;
 	}
 
 	public static function print_classes( $stack, $extra = '' ) {
