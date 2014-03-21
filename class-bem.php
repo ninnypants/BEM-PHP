@@ -2,53 +2,104 @@
 class BEM {
 	public static $child_seperator = '__';
 	public static $variation_seperator = '--';
-	protected $stack = array();
-	protected $block = '';
+	public static $stacks = array();
 
-	public function __construct( $block = '' ) {
-		if ( ! empty( $block ) ) {
-			$this->add_block( $block );
+	public static function new_stack( $stack, $block = false ) {
+		if ( is_array( $stack ) ) {
+			self::$stacks[ $stack[0] ] = array();
+			self::add_block( $stack[0], $stack );
+		} else {
+			self::$stacks[ $stack ] = array();
+			if ( $block ) {
+				self::add_block( $stack, $block );
+			} else {
+				self::add_block( $stack, $stack );
+			}
 		}
 	}
 
-	public function add_block( $block ) {
-		$this->stack[$block] = array();
-		$this->block = $block;
+	public static function add_block( $stack, $block ) {
+		if ( empty( $block ) ) {
+			return;
+		}
+
+		if ( is_array( $block ) ) {
+			$blocks = $block;
+			foreach ( $blocks as $block ) {
+				self::$stacks[ $stack ][ $block ] = array();
+			}
+		} else {
+			self::$stacks[ $stack ][ $block ] = array();
+		}
 	}
 
-	public function remove_block() {
-		array_pop( $this->stack );
-		$keys = array_keys( $this->stack );
-		$this->block = end( $keys );
+	public static function remove_block( $stack ) {
+		array_pop( self::$stacks[ $stack ] );
 	}
 
-	public function add_variation( $variation ) {
-		$this->stack[ $this->block ][] = $variation;
+	public static function remove_blocks_to( $stack, $block ) {
+		$keys = array_reverse( array_keys( self::$stacks[ $stack ] ) );
+		foreach ( $keys as $key ) {
+			if ( $block == $key ) {
+				break;
+			}
+
+			unset( self::$stacks[ $stack ][ $key ] );
+		}
 	}
 
-	public function remove_variation( $variation ) {
-		$key = array_search( $variation,  $this->stack[ $this->block ] );
-		unset( $this->stack[ $this->block ][ $key ] );
+	public static function add_variation( $stack, $variation ) {
+		$key = array_keys( self::$stacks[ $stack ] );
+		$block = end( $key );
+		if ( is_array( $variation ) ) {
+			self::$stacks[ $stack ][ $block ] = array_merge( self::$stacks[ $stack ][ $block ], $variation );
+		} else {
+			self::$stacks[ $stack ][ $block ][] = $variation;
+		}
 	}
 
-	protected function append_variations( $classes, $key ) {
+	public static function add_variation_to( $stack, $block, $variation ) {
+		if ( is_array( $variation ) ) {
+			self::$stacks[ $stack ][ $block ] = array_merge( self::$stacks[ $stack ][ $block ], $variation );
+		} else {
+			self::$stacks[ $stack ][ $block ][] = $variation;
+		}
+	}
+
+	public static function remove_variation( $stack, $variation ) {
+		$key = array_keys( self::$stacks[ $stack ] );
+		$block = end( $key );
+		$i = array_search( $variation, self::$stacks[ $stack ][ $block ] );
+		if ( false !== $i ) {
+			unset( $variation, self::$stacks[ $stack ][ $block ][ $i ] );
+		}
+	}
+
+	public static function remove_variation_from( $stack, $block, $variation ) {
+		$i = array_search( $variation, self::$stacks[ $stack ][ $block ] );
+		if ( false !== $i ) {
+			unset( $variation, self::$stacks[ $stack ][ $block ][ $i ] );
+		}
+	}
+
+	protected static function append_variations( $stack, $key, $classes ) {
 		$varried_classes = array();
 		foreach ( $classes as $class ) {
-			foreach ( $this->stack[ $key ] as $variation ) {
+			foreach ( self::$stacks[ $stack ][ $key ] as $variation ) {
 				$varried_classes[] = $class . self::$variation_seperator . $variation;
 			}
 		}
 		return $varried_classes;
 	}
 
-	public function print_classes() {
-		if ( empty( $this->stack ) ) {
-			return false;
-		}
+	public static function get_classes( $stack ) {
+		return self::get_classes_to( $stack, '' );
+	}
 
+	public static function get_classes_to( $stack, $block ) {
+		$keys = array_keys( self::$stacks[ $stack ] );
 		$classes = array();
-		do {
-			$key = key( $this->stack );
+		foreach ( $keys as $key ) {
 			// if it's the first itteration just add the classes
 			if ( empty( $classes ) ) {
 				$classes[] = $key;
@@ -58,26 +109,21 @@ class BEM {
 					$classes[ $k ] .= self::$child_seperator . $key;
 				}
 			}
-			$classes = array_merge( $classes, $this->append_variations( $classes, $key ) );
-		} while( next( $this->stack ) );
-		reset( $this->stack );
+			$classes = array_merge( $classes, self::append_variations( $stack, $key, $classes ) );
 
-		echo implode( ' ', $classes );
+			if ( $key == $block ) {
+				break;
+			}
+		}
+
+		return $classes;
+	}
+
+	public static function print_classes( $stack, $extra = '' ) {
+		echo 'class="' . implode( ' ', self::get_classes( $stack ) ) . ' ' . $extra . '"';
+	}
+
+	public static function print_classes_to( $stack, $block, $extra = '' ) {
+		echo 'class="' . implode( ' ', self::get_classes_to( $stack, $block ) ) . ' ' . $extra . '"';
 	}
 }
-
-$test = new BEM( 'base' );
-$test->add_variation( 'var-1' );
-$test->add_variation( 'var-2' );
-$test->print_classes();
-echo "\n\n";
-$test->add_block( 'child' );
-$test->add_variation( 'var-1' );
-$test->add_variation( 'var-2' );
-$test->print_classes();
-echo "\n\n";
-$test->remove_variation( 'var-2' );
-$test->print_classes();
-echo "\n\n";
-$test->remove_block();
-$test->print_classes();
